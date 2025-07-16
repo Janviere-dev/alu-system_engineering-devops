@@ -7,7 +7,10 @@ set -e
 apt-get update -y
 apt-get install nginx -y
 
-# Inject redirect block into Nginx config
+# Create a backup of the default config
+cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default.bak
+
+# Inject redirect block inside the server context
 sed -i '/^\s*server {/a \    location /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }' /etc/nginx/sites-available/default
 
 # Start Nginx using service (not systemctl)
