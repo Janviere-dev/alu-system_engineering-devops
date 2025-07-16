@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Installs Nginx, configures root page content, and starts Nginx without using systemctl
+
+# Exit on error
+set -e
+
+# Install nginx silently with auto-confirm
+apt-get update -y
+apt-get install nginx -y
+
+# Overwrite Nginx root index page
+echo "Holberton School for the win!" > /var/www/html/index.html
+
+# Start nginx using init system (Ubuntu 16.04 compatible without systemctl)
+service nginx start
+
