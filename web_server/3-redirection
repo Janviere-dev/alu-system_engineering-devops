@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Installs Nginx and configures a 301 redirect from /redirect_me to a YouTube page
+
+set -e
+
+# Update and install Nginx
+apt-get update -y
+apt-get install nginx -y
+
+# Set up redirect using sed to insert location block
+# This will be placed inside the default server configuration
+sed -i '/^\s*location \/ {/a \    location /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }' /etc/nginx/sites-available/default
+
+# Start Nginx using service (no systemctl!)
+service nginx start
+
