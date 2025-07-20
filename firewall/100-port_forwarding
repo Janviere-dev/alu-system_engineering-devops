@@ -1,11 +1,24 @@
-# Enable UFW packet forwarding capabilities
-sudo nano /etc/ufw/sysctl.conf
+#!/bin/bash
+# This script configures UFW to forward TCP traffic from port 8080 to port 80
 
-# Uncomment or add this line:
-net/ipv4/ip_forward=1
+# Enable IPv4 forwarding
+sed -i 's/#net\/ipv4\/ip_forward=1/net\/ipv4\/ip_forward=1/' /etc/ufw/sysctl.conf
 
-# Save and close the file
+# Insert NAT redirect rule into UFW before.rules
+ufw_before_rules="/etc/ufw/before.rules"
 
-# Add NAT rule via UFW before rules file
-sudo nano /etc/ufw/before.rules
+# Backup original before.rules
+cp $ufw_before_rules ${ufw_before_rules}.bak
+
+# Add NAT rules at the top of the file if not present
+if ! grep -q "REDIRECT --to-port 80" "$ufw_before_rules"; then
+    sed -i '1i*nat\n:PREROUTING ACCEPT [0:0]\n:POSTROUTING ACCEPT [0:0]\n-A PREROUTING -p tcp --dport 8080 -j REDIRECT --to-port 80\nCOMMIT\n' "$ufw_before_rules"
+fi
+
+# Reload sysctl settings
+sysctl -p
+
+# Restart UFW to apply changes
+ufw disable
+ufw enable
 
