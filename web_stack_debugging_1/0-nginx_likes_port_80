@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+## Ensure Nginx is installed and listening on port 80 on all IPv6 interfaces
 apt-get update -y
 apt-get install -y nginx
 
