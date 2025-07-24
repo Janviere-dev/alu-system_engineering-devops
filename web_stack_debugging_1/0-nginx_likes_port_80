@@ -4,7 +4,6 @@
 apt-get update -y
 apt-get install -y nginx
 
-# Replace the default config with proper IPv4 + IPv6 bindings
 cat > /etc/nginx/sites-available/default <<EOF
 server {
     listen 80 default_server;
@@ -21,10 +20,12 @@ server {
 }
 EOF
 
-# Re-link if needed
 rm -f /etc/nginx/sites-enabled/default
 ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-# Restart the correct service
 service nginx restart
+
+# Test both interfaces
+curl -s 0:80 > /dev/null
+curl -s 127.0.0.1:80 > /dev/null
 
