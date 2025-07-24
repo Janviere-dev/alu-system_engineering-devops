@@ -1,13 +1,13 @@
-#!/usr/bin/env bash
-## Ensure Nginx is installed and listening on port 80 on all IPv6 interfaces
+#!/bin/bash
+# Install and configure Nginx to listen on port 80 on all IPv4 interfaces
+
 apt-get update -y
 apt-get install -y nginx
 
-# Replace default config to ensure it listens correctly
 cat > /etc/nginx/sites-enabled/default <<EOF
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
+    listen [::]:80 default_server ipv6only=on;
 
     root /var/www/html;
     index index.html index.htm;
@@ -22,3 +22,7 @@ EOF
 
 # Restart Nginx to apply changes
 systemctl restart nginx
+
+# Optional debug line
+echo "Nginx is running and listening on all active interfaces on port 80."
+
