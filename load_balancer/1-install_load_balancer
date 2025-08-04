@@ -1,28 +1,64 @@
 #!/usr/bin/env bash
-# Install and configure HAProxy on lb-01 server
+# Installs and configures HAproxy on lb-01 server for load balancing
 
-balancer="\
-frontend haproxy_balancer
-    bind *:80
+# Update package list
+apt-get update -y
+
+# Install HAproxy
+apt-get install haproxy -y
+
+# Backup original configuration
+cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.backup
+
+# Create HAproxy configuration
+cat > /etc/haproxy/haproxy.cfg << 'EOF'
+global
+    daemon
+    maxconn 256
+
+defaults
     mode http
-    default_backend webservers
-    
-backend webservers
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+    option httplog
+    option dontlognull
+    retries 3
+    option redispatch
+
+frontend http_front
+    bind *:80
+    stats uri /haproxy?stats
+    default_backend http_back
+
+backend http_back
     balance roundrobin
-    server 26071-web-01 44.210.150.159:80 check
-    server 26071-web-02 35.173.47.15:80 check
-"
-# Update packages
-apt-get -y update
-apt-get -y upgrade
+    option httpchk GET /
+    server 6644-web-01 54.175.153.72:80 check
+    server 6644-web-02 44.204.37.235:80 check
+EOF
 
-# Add HAProxy PPA
-apt-get -y install software-properties-common
-add-apt-repository -y ppa:vbernat/haproxy-2.5
-apt-get -y update
+# Enable HAproxy to be started by init script
+echo "ENABLED=1" > /etc/default/haproxy
 
-# Install HAProxy
-apt-get -y install haproxy
-cp -a /etc/haproxy/haproxy.cfg{,.orig}
-echo "$balancer" >> /etc/haproxy/haproxy.cfg
-service haproxy restart
+# Test HAproxy configuration
+haproxy -f /etc/haproxy/haproxy.cfg -c
+
+# Start and enable HAproxy service
+systemctl start haproxy
+systemctl enable haproxy
+
+# Restart HAproxy to apply configuration
+systemctl restart haproxy
+
+# Allow HTTP traffic through firewall (if ufw is active)
+ufw allow 80 2>/dev/null || true
+
+# Check if HAproxy is running
+systemctl status haproxy --no-pager
+
+echo "HAproxy installed and configured successfully!"
+echo "Load balancer is distributing traffic between:"
+echo "- 6644-web-01 (54.175.153.72)"
+echo "- 6644-web-02 (44.204.37.235)"
+echo "Using roundrobin algorithm"
